@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>StakeUp</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#161A23;
+    --canvas:#F1F2EC;
+    --card:#FFFFFF;
+    --border:#E3E4DB;
+    --muted:#8A8C81;
+    --muted2:#9A9C90;
+    --amber:#E2A33B;
+    --teal:#2F8F79;
+    --brick:#C05A46;
+    --text:#20232C;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Inter',sans-serif;
+    background:var(--canvas);
+    color:var(--text);
+  }
+  h1,h2,h3,.display{ font-family:'Space Grotesk',sans-serif; }
+
+  /* ---- layout ---- */
+  header.topbar{
+    background:var(--ink);
+    color:#fff;
+    padding:14px 24px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .brand{ display:flex; align-items:center; gap:10px; }
+  .brand .logo{
+    width:30px;height:30px;border-radius:7px;background:var(--amber);
+    display:flex;align-items:center;justify-content:center;
+    color:var(--ink);font-weight:700;font-family:'Space Grotesk',sans-serif;
+  }
+  .brand-name{ font-family:'Space Grotesk',sans-serif; font-size:16px; letter-spacing:0.2px;}
+  .topbar-right{ display:flex; align-items:center; gap:16px; position:relative; }
+  .startup-title{ font-size:13px; color:#C9CBD6; }
+  .bell-btn{
+    background:transparent;border:none;color:#fff;cursor:pointer;
+    position:relative; padding:6px; border-radius:6px; display:flex;
+  }
+  .bell-btn:hover{ background:rgba(255,255,255,0.08); }
+  .badge{
+    position:absolute; top:0; right:0; background:var(--brick); color:#fff;
+    font-size:10px; min-width:16px; height:16px; border-radius:8px;
+    display:flex; align-items:center; justify-content:center; padding:0 4px;
+  }
+  .notif-panel{
+    position:absolute; top:40px; right:0; width:280px; background:var(--card);
+    color:var(--text); border:1px solid var(--border); border-radius:10px;
+    box-shadow:0 8px 24px rgba(0,0,0,0.15); padding:10px; z-index:20; display:none;
+  }
+  .notif-panel.open{ display:block; }
+  .notif-panel h4{ margin:4px 6px 8px; font-size:13px; color:var(--muted); font-weight:500;}
+  .notif-item{ font-size:13px; padding:8px 6px; border-top:1px solid #EEEFE9; }
+  .notif-item:first-of-type{ border-top:none; }
+
+  nav.tabs{
+    display:flex; gap:2px; background:var(--card); border-bottom:1px solid var(--border);
+    padding:0 20px; overflow-x:auto;
+  }
+  nav.tabs button{
+    background:none; border:none; padding:14px 14px; font-size:13.5px; cursor:pointer;
+    color:var(--muted); border-bottom:2px solid transparent; white-space:nowrap;
+    font-family:'Inter',sans-serif;
+  }
+  nav.tabs button.active{ color:var(--ink); border-bottom-color:var(--amber); font-weight:600; }
+
+  main{ max-width:1080px; margin:0 auto; padding:28px 24px 60px; }
+
+  .card{
+    background:var(--card); border:1px solid var(--border); border-radius:10px;
+    padding:20px;
+  }
+  .grid2{ display:grid; grid-template-columns:1.3fr 1fr; gap:18px; }
+  @media (max-width:800px){ .grid2{ grid-template-columns:1fr; } }
+  .stack{ display:flex; flex-direction:column; gap:16px; }
+
+  .stats{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:20px; }
+  @media (max-width:700px){ .stats{ grid-template-columns:repeat(2,1fr); } }
+  .stat{ background:var(--card); border:1px solid var(--border); border-radius:10px; padding:14px; }
+  .stat .num{ font-size:22px; font-weight:600; }
+  .stat .lbl{ font-size:12px; color:var(--muted2); margin-top:2px; }
+
+  /* milestone rail */
+  .rail-wrap{ overflow-x:auto; padding:10px 2px 4px; }
+  .rail{ display:flex; align-items:flex-start; min-width:max-content; }
+  .node{ display:flex; flex-direction:column; align-items:center; width:118px; flex-shrink:0; }
+  .node .dot{
+    width:30px;height:30px;border-radius:50%; display:flex; align-items:center; justify-content:center;
+    background:#fff; font-size:14px;
+  }
+  .node .title{ font-size:12px; font-weight:600; margin-top:8px; text-align:center; line-height:1.25; }
+  .node .date{ font-size:11px; color:var(--muted2); margin-top:2px; }
+  .connector{ height:2px; width:60px; margin-top:15px; flex-shrink:0; }
+
+  input, select, textarea{
+    width:100%; padding:9px 11px; border:1px solid var(--border); border-radius:7px;
+    font-family:'Inter',sans-serif; font-size:13.5px; background:#FAFAF6; color:var(--text);
+  }
+  label{ font-size:12.5px; color:var(--muted); display:block; margin-bottom:5px; }
+  .field{ margin-bottom:12px; }
+  .btn{
+    background:var(--ink); color:#fff; border:none; border-radius:7px;
+    padding:10px 16px; font-size:13.5px; cursor:pointer; font-family:'Inter',sans-serif;
+  }
+  .btn.amber{ background:var(--amber); color:var(--ink); font-weight:600; }
+  .btn:hover{ opacity:0.92; }
+
+  .list-item{ display:flex; align-items:flex-start; gap:10px; padding:10px 0; border-top:1px solid #EEEFE9; }
+  .list-item:first-child{ border-top:none; }
+  .pill{ font-size:11px; padding:2px 8px; border-radius:20px; font-weight:600; flex-shrink:0; }
+  .pill.done{ background:rgba(226,163,59,0.18); color:#8C6112; }
+  .pill.inprog{ background:rgba(47,143,121,0.15); color:#1F6A57; }
+  .pill.risk{ background:rgba(192,90,70,0.15); color:#98392A; }
+  .pill.upcoming{ background:#EEEFE9; color:var(--muted); }
+
+  .empty{ text-align:center; padding:40px 20px; color:var(--muted); }
+  .empty .display{ color:var(--text); font-size:16px; margin-bottom:6px; }
+
+  .section-title{ display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+  .section-title h2{ font-size:17px; font-weight:600; margin:0; }
+  .hint{ font-size:12px; color:var(--muted2); }
+
+  .checkbox-row{ display:flex; align-items:center; gap:10px; }
+  .checkbox-row input[type=checkbox]{ width:16px; height:16px; }
+  .task-text.done{ text-decoration:line-through; color:var(--muted2); }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <div class="logo">S</div>
+    <div class="brand-name">StakeUp</div>
+  </div>
+  <div class="topbar-right">
+    <span class="startup-title" id="headerStartupName">No startup profile yet</span>
+    <button class="bell-btn" id="bellBtn" aria-label="Notifications">
+      🔔<span class="badge" id="notifBadge" style="display:none;">0</span>
+    </button>
+    <div class="notif-panel" id="notifPanel">
+      <h4>Recent activity</h4>
+      <div id="notifList"></div>
+    </div>
+  </div>
+</header>
+
+<nav class="tabs" id="tabs">
+  <button data-tab="dashboard" class="active">Dashboard</button>
+  <button data-tab="profile">Profile</button>
+  <button data-tab="milestones">Milestones</button>
+  <button data-tab="tasks">Tasks</button>
+  <button data-tab="documents">Documents</button>
+  <button data-tab="stakeholders">Stakeholders</button>
+  <button data-tab="comments">Comments</button>
+  <button data-tab="activity">Activity Timeline</button>
+</nav>
+
+<main id="content"></main>
+
+<script>
+// ---------------- State ----------------
+const state = {
+  profile: null, // { name, tagline, description, stage }
+  milestones: [
+    { id: 1, title: "Idea validated", date: "2026-03-02", status: "done" },
+    { id: 2, title: "MVP scoped", date: "2026-03-18", status: "done" },
+    { id: 3, title: "Seed deck ready", date: "2026-04-24", status: "risk" },
+    { id: 4, title: "Pilot with first client", date: "2026-05-12", status: "inprog" },
+  ],
+  tasks: [
+    { id: 1, text: "Rework market-sizing slide", done: false, assignee: "Priya" },
+    { id: 2, text: "Send pilot MSA for signature", done: true, assignee: "Dev" },
+  ],
+  documents: [
+    { id: 1, name: "Cap table v4.xlsx" },
+    { id: 2, name: "Pilot MSA - draft.pdf" },
+  ],
+  stakeholders: [
+    { id: 1, name: "Arun Mehta", email: "arun@example.com", role: "Advisor" },
+  ],
+  comments: [],
+  activity: [],
+};
+
+let nextId = { milestones: 5, tasks: 3, documents: 3, stakeholders: 2, comments: 1, activity: 1 };
+let unread = 0;
+let currentTab = "dashboard";
+
+function escapeHtml(str){
+  const d = document.createElement("div");
+  d.innerText = str;
+  return d.innerHTML;
+}
+
+function logActivity(text){
+  state.activity.unshift({ id: nextId.activity++, text, time: new Date().toLocaleString() });
+  unread++;
+  updateBadge();
+}
+
+function updateBadge(){
+  const badge = document.getElementById("notifBadge");
+  if(unread > 0){ badge.style.display = "flex"; badge.textContent = unread > 9 ? "9+" : unread; }
+  else { badge.style.display = "none"; }
+}
+
+function statusMeta(status){
+  return {
+    done:    { label:"Done",        pill:"done",     ring:"var(--amber)", icon:"✓" },
+    inprog:  { label:"In progress", pill:"inprog",   ring:"var(--teal)",  icon:"●" },
+    risk:    { label:"At risk",     pill:"risk",     ring:"var(--brick)", icon:"!" },
+    upcoming:{ label:"Upcoming",    pill:"upcoming", ring:"#B8B9AF",      icon:"○" },
+  }[status];
+}
+
+// ---------------- Render router ----------------
+function render(){
+  document.querySelectorAll("nav.tabs button").forEach(b=>{
+    b.classList.toggle("active", b.dataset.tab === currentTab);
+  });
+  const map = {
+    dashboard: renderDashboard,
+    profile: renderProfile,
+    milestones: renderMilestones,
+    tasks: renderTasks,
+    documents: renderDocuments,
+    stakeholders: renderStakeholders,
+    comments: renderComments,
+    activity: renderActivityTab,
+  };
+  document.getElementById("content").innerHTML = map[currentTab]();
+  document.getElementById("headerStartupName").textContent = state.profile ? state.profile.name : "No startup profile yet";
+  attachHandlers();
+  renderNotifPanel();
+}
+
+// ---------------- Dashboard ----------------
+function renderDashboard(){
+  const doneCount = state.milestones.filter(m=>m.status==="done").length;
+  const openTasks = state.tasks.filter(t=>!t.done).length;
+
+  if(!state.profile){
+    return `
+      <div class="card empty">
+        <div class="display">Create your startup profile to get started</div>
+        <p>Your dashboard, milestones, and updates will show up here once your profile exists.</p>
+        <button class="btn amber" data-action="go-profile" style="margin-top:10px;">Create profile</button>
+      </div>`;
+  }
+
+  return `
+    <div class="stats">
+      <div class="stat"><div class="num">${doneCount} / ${state.milestones.length}</div><div class="lbl">Milestones hit</div></div>
+      <div class="stat"><div class="num">${openTasks}</div><div class="lbl">Open tasks</div></div>
+      <div class="stat"><div class="num">${state.stakeholders.length}</div><div class="lbl">Stakeholders</div></div>
+      <div class="stat"><div class="num">${state.documents.length}</div><div class="lbl">Documents</div></div>
+    </div>
+
+    <div class="card" style="margin-bottom:18px;">
+      <div class="section-title"><h2>${escapeHtml(state.profile.name)}</h2></div>
+      <p style="color:var(--muted);margin:0 0 14px;">${escapeHtml(state.profile.tagline || "")}</p>
+      ${renderRail()}
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <div class="section-title"><h2>This week, in short</h2><span class="hint">Auto-built from activity</span></div>
+        ${renderDigest()}
+      </div>
+      <div class="card">
+        <div class="section-title"><h2>Recent activity</h2></div>
+        ${state.activity.length === 0
+          ? `<p style="color:var(--muted);font-size:13.5px;">Nothing yet — actions you take will show up here.</p>`
+          : state.activity.slice(0,6).map(a=>`
+            <div class="list-item"><p style="font-size:13.5px;margin:0;">${escapeHtml(a.text)}<br><span style="color:var(--muted2);font-size:11.5px;">${a.time}</span></p></div>
+          `).join("")}
+      </div>
+    </div>
+  `;
+}
+
+function renderRail(){
+  if(state.milestones.length === 0){
+    return `<p style="color:var(--muted);font-size:13.5px;">No milestones yet — add one from the Milestones tab.</p>`;
+  }
+  let html = `<div class="rail-wrap"><div class="rail">`;
+  state.milestones.forEach((m,i)=>{
+    const meta = statusMeta(m.status);
+    html += `
+      <div class="node">
+        <div class="dot" style="border:2px solid ${meta.ring}; color:${meta.ring};">${meta.icon}</div>
+        <div class="title">${escapeHtml(m.title)}</div>
+        <div class="date">${m.date}</div>
+      </div>`;
+    if(i < state.milestones.length - 1){
+      html += `<div class="connector" style="background:${m.status==='done' ? 'var(--amber)' : '#D8D9CE'};"></div>`;
+    }
+  });
+  html += `</div></div>`;
+  return html;
+}
+
+function renderDigest(){
+  const lines = [];
+  const done = state.milestones.filter(m=>m.status==="done");
+  const risk = state.milestones.filter(m=>m.status==="risk");
+  const inprog = state.milestones.filter(m=>m.status==="inprog");
+  if(done.length) lines.push({c:"var(--amber)", t:`${done.length} milestone(s) completed so far, most recently "${done[done.length-1].title}".`});
+  inprog.forEach(m => lines.push({c:"var(--teal)", t:`${m.title} is underway, targeting ${m.date}.`}));
+  risk.forEach(m => lines.push({c:"var(--brick)", t:`${m.title} needs attention — it's flagged at risk.`}));
+  const openTasks = state.tasks.filter(t=>!t.done).length;
+  if(openTasks) lines.push({c:"var(--muted2)", t:`${openTasks} task(s) still open.`});
+  if(lines.length === 0) return `<p style="color:var(--muted);font-size:13.5px;">Nothing to summarize yet.</p>`;
+  return lines.map(l=>`
+    <div style="display:flex;gap:10px;margin-bottom:10px;">
+      <div style="width:6px;height:6px;border-radius:50%;background:${l.c};margin-top:6px;flex-shrink:0;"></div>
+      <p style="margin:0;font-size:13.5px;line-height:1.5;">${l.t}</p>
+    </div>`).join("");
+}
+
+// ---------------- Profile ----------------
+function renderProfile(){
+  const p = state.profile || { name:"", tagline:"", description:"", stage:"Idea" };
+  return `
+    <div class="card" style="max-width:560px;">
+      <div class="section-title"><h2>${state.profile ? "Edit" : "Create"} startup profile</h2></div>
+      <form id="profileForm">
+        <div class="field"><label>Startup name</label><input name="name" required value="${escapeHtml(p.name)}" placeholder="e.g. Wardline Health"></div>
+        <div class="field"><label>One-line tagline</label><input name="tagline" value="${escapeHtml(p.tagline)}" placeholder="What you do, in one sentence"></div>
+        <div class="field"><label>Description</label><textarea name="description" rows="3" placeholder="A short overview for stakeholders">${escapeHtml(p.description)}</textarea></div>
+        <div class="field"><label>Stage</label>
+          <select name="stage">
+            ${["Idea","MVP","Pilot","Seed","Growth"].map(s=>`<option ${p.stage===s?"selected":""}>${s}</option>`).join("")}
+          </select>
+        </div>
+        <button type="submit" class="btn amber">${state.profile ? "Save changes" : "Create profile"}</button>
+      </form>
+    </div>
+  `;
+}
+
+// ---------------- Milestones ----------------
+function renderMilestones(){
+  return `
+    <div class="grid2">
+      <div class="card">
+        <div class="section-title"><h2>Milestones</h2></div>
+        ${state.milestones.length===0 ? `<p style="color:var(--muted);font-size:13.5px;">No milestones yet.</p>` :
+          state.milestones.map(m=>{
+            const meta = statusMeta(m.status);
+            return `
+            <div class="list-item">
+              <div style="flex:1;">
+                <p style="margin:0;font-weight:600;font-size:13.5px;">${escapeHtml(m.title)}</p>
+                <p style="margin:2px 0 0;font-size:12px;color:var(--muted2);">${m.date}</p>
+              </div>
+              <span class="pill ${meta.pill}">${meta.label}</span>
+              <select class="status-select" data-id="${m.id}" style="width:auto;font-size:12px;padding:5px 6px;">
+                <option value="upcoming" ${m.status==="upcoming"?"selected":""}>Upcoming</option>
+                <option value="inprog" ${m.status==="inprog"?"selected":""}>In progress</option>
+                <option value="risk" ${m.status==="risk"?"selected":""}>At risk</option>
+                <option value="done" ${m.status==="done"?"selected":""}>Done</option>
+              </select>
+            </div>`;
+          }).join("")}
+      </div>
+      <div class="card">
+        <div class="section-title"><h2>Add milestone</h2></div>
+        <form id="milestoneForm">
+          <div class="field"><label>Title</label><input name="title" required placeholder="e.g. Launch beta"></div>
+          <div class="field"><label>Target date</label><input name="date" type="date" required></div>
+          <div class="field"><label>Status</label>
+            <select name="status">
+              <option value="upcoming">Upcoming</option>
+              <option value="inprog">In progress</option>
+              <option value="risk">At risk</option>
+              <option value="done">Done</option>
+            </select>
+          </div>
+          <button type="submit" class="btn">Add milestone</button>
+        </form>
+      </div>
+    </div>
+  `;
+}
+
+// ---------------- Tasks ----------------
+function renderTasks(){
+  return `
+    <div class="grid2">
+      <div class="card">
+        <div class="section-title"><h2>Tasks &amp; action items</h2></div>
+        ${state.tasks.length===0 ? `<p style="color:var(--muted);font-size:13.5px;">No tasks yet.</p>` :
+          state.tasks.map(t=>`
+            <div class="list-item checkbox-row">
+              <input type="checkbox" class="task-check" data-id="${t.id}" ${t.done?"checked":""}>
+              <div style="flex:1;">
+                <span class="task-text ${t.done?"done":""}" style="font-size:13.5px;">${escapeHtml(t.text)}</span>
+                <div style="font-size:11.5px;color:var(--muted2);">${t.assignee ? "Assigned to " + escapeHtml(t.assignee) : "Unassigned"}</div>
+              </div>
+            </div>`).join("")}
+      </div>
+      <div class="card">
+        <div class="section-title"><h2>Add task</h2></div>
+        <form id="taskForm">
+          <div class="field"><label>Task</label><input name="text" required placeholder="e.g. Fix onboarding flow"></div>
+          <div class="field"><label>Assignee (optional)</label><input name="assignee" placeholder="e.g. Priya"></div>
+          <button type="submit" class="btn">Add task</button>
+        </form>
+      </div>
+    </div>
+  `;
+}
+
+// ---------------- Documents ----------------
+function renderDocuments(){
+  return `
+    <div class="grid2">
+      <div class="card">
+        <div class="section-title"><h2>Shared documents</h2></div>
+        ${state.documents.length===0 ? `<p style="color:var(--muted);font-size:13.5px;">No documents shared yet.</p>` :
+          state.documents.map(d=>`
+            <div class="list-item"><p style="margin:0;font-size:13.5px;">📎 ${escapeHtml(d.name)}</p></div>`).join("")}
+      </div>
+      <div class="card">
+        <div class="section-title"><h2>Share a document</h2></div>
+        <p class="hint" style="margin-top:-6px;margin-bottom:12px;">This demo just records the file name — a real backend would store the actual file.</p>
+        <form id="documentForm">
+          <div class="field"><label>File name</label><input name="name" required placeholder="e.g. Pitch deck v2.pptx"></div>
+          <button type="submit" class="btn">Add document</button>
+        </form>
+      </div>
+    </div>
+  `;
+}
+
+// ---------------- Stakeholders ----------------
+function renderStakeholders(){
+  return `
+    <div class="grid2">
+      <div class="card">
+        <div class="section-title"><h2>Stakeholders</h2></div>
+        ${state.stakeholders.length===0 ? `<p style="color:var(--muted);font-size:13.5px;">No stakeholders invited yet.</p>` :
+          state.stakeholders.map(s=>`
+            <div class="list-item">
+              <div style="flex:1;">
+                <p style="margin:0;font-weight:600;font-size:13.5px;">${escapeHtml(s.name)}</p>
+                <p style="margin:2px 0 0;font-size:12px;color:var(--muted2);">${escapeHtml(s.email)}</p>
+              </div>
+              <span class="pill upcoming">${escapeHtml(s.role)}</span>
+            </div>`).join("")}
+      </div>
+      <div class="card">
+        <div class="section-title"><h2>Invite a stakeholder</h2></div>
+        <form id="stakeholderForm">
+          <div class="field"><label>Name</label><input name="name" required placeholder="e.g. Riverside Ventures"></div>
+          <div class="field"><label>Email</label><input name="email" type="email" required placeholder="name@example.com"></div>
+          <div class="field"><label>Role</label>
+            <select name="role">
+              <option>Advisor</option><option>Angel Investor</option><option>Incubator</option><option>Team Member</option>
+            </select>
+          </div>
+          <button type="submit" class="btn">Send invite</button>
+        </form>
+      </div>
+    </div>
+  `;
+}
+
+// ---------------- Comments ----------------
+function renderComments(){
+  return `
+    <div class="grid2">
+      <div class="card">
+        <div class="section-title"><h2>Comments &amp; feedback</h2></div>
+        ${state.comments.length===0 ? `<p style="color:var(--muted);font-size:13.5px;">No comments yet.</p>` :
+          state.comments.map(c=>`
+            <div class="list-item">
+              <div>
+                <p style="margin:0;font-size:13.5px;">${escapeHtml(c.text)}</p>
+                <p style="margin:3px 0 0;font-size:11.5px;color:var(--muted2);">${escapeHtml(c.author)} · ${c.date}</p>
+              </div>
+            </div>`).join("")}
+      </div>
+      <div class="card">
+        <div class="section-title"><h2>Add a comment</h2></div>
+        <form id="commentForm">
+          <div class="field"><label>Your name</label><input name="author" required placeholder="e.g. Arun Mehta"></div>
+          <div class="field"><label>Comment</label><textarea name="text" rows="3" required placeholder="Leave feedback on progress"></textarea></div>
+          <button type="submit" class="btn">Post comment</button>
+        </form>
+      </div>
+    </div>
+  `;
+}
+
+// ---------------- Activity ----------------
+function renderActivityTab(){
+  return `
+    <div class="card">
+      <div class="section-title"><h2>Full activity timeline</h2></div>
+      ${state.activity.length===0 ? `<p style="color:var(--muted);font-size:13.5px;">Nothing has happened yet — start by creating a profile or adding a milestone.</p>` :
+        state.activity.map(a=>`
+          <div class="list-item"><p style="margin:0;font-size:13.5px;">${escapeHtml(a.text)}<br><span style="color:var(--muted2);font-size:11.5px;">${a.time}</span></p></div>`).join("")}
+    </div>
+  `;
+}
+
+// ---------------- Notifications panel ----------------
+function renderNotifPanel(){
+  const list = document.getElementById("notifList");
+  if(state.activity.length === 0){
+    list.innerHTML = `<div class="notif-item" style="color:var(--muted);">No activity yet.</div>`;
+  } else {
+    list.innerHTML = state.activity.slice(0,5).map(a=>`<div class="notif-item">${escapeHtml(a.text)}</div>`).join("");
+  }
+}
+
+// ---------------- Event handlers ----------------
+function attachHandlers(){
+  const content = document.getElementById("content");
+
+  const goProfileBtn = content.querySelector('[data-action="go-profile"]');
+  if(goProfileBtn) goProfileBtn.addEventListener("click", ()=>{ currentTab="profile"; render(); });
+
+  const profileForm = content.querySelector("#profileForm");
+  if(profileForm) profileForm.addEventListener("submit", e=>{
+    e.preventDefault();
+    const f = new FormData(profileForm);
+    const isNew = !state.profile;
+    state.profile = { name: f.get("name"), tagline: f.get("tagline"), description: f.get("description"), stage: f.get("stage") };
+    logActivity(isNew ? `Created startup profile "${state.profile.name}".` : `Updated startup profile.`);
+    currentTab = "dashboard";
+    render();
+  });
+
+  const milestoneForm = content.querySelector("#milestoneForm");
+  if(milestoneForm) milestoneForm.addEventListener("submit", e=>{
+    e.preventDefault();
+    const f = new FormData(milestoneForm);
+    const m = { id: nextId.milestones++, title: f.get("title"), date: f.get("date"), status: f.get("status") };
+    state.milestones.push(m);
+    logActivity(`Added milestone "${m.title}".`);
+    render();
+  });
+  content.querySelectorAll(".status-select").forEach(sel=>{
+    sel.addEventListener("change", e=>{
+      const id = Number(e.target.dataset.id);
+      const m = state.milestones.find(x=>x.id===id);
+      m.status = e.target.value;
+      logActivity(`Updated "${m.title}" to ${statusMeta(m.status).label}.`);
+      render();
+    });
+  });
+
+  const taskForm = content.querySelector("#taskForm");
+  if(taskForm) taskForm.addEventListener("submit", e=>{
+    e.preventDefault();
+    const f = new FormData(taskForm);
+    const t = { id: nextId.tasks++, text: f.get("text"), assignee: f.get("assignee"), done:false };
+    state.tasks.push(t);
+    logActivity(`Added task "${t.text}".`);
+    render();
+  });
+  content.querySelectorAll(".task-check").forEach(cb=>{
+    cb.addEventListener("change", e=>{
+      const id = Number(e.target.dataset.id);
+      const t = state.tasks.find(x=>x.id===id);
+      t.done = e.target.checked;
+      logActivity(`Marked task "${t.text}" as ${t.done ? "done" : "open"}.`);
+      render();
+    });
+  });
+
+  const documentForm = content.querySelector("#documentForm");
+  if(documentForm) documentForm.addEventListener("submit", e=>{
+    e.preventDefault();
+    const f = new FormData(documentForm);
+    const d = { id: nextId.documents++, name: f.get("name") };
+    state.documents.push(d);
+    logActivity(`Shared document "${d.name}".`);
+    render();
+  });
+
+  const stakeholderForm = content.querySelector("#stakeholderForm");
+  if(stakeholderForm) stakeholderForm.addEventListener("submit", e=>{
+    e.preventDefault();
+    const f = new FormData(stakeholderForm);
+    const s = { id: nextId.stakeholders++, name: f.get("name"), email: f.get("email"), role: f.get("role") };
+    state.stakeholders.push(s);
+    logActivity(`Invited ${s.name} as ${s.role}.`);
+    render();
+  });
+
+  const commentForm = content.querySelector("#commentForm");
+  if(commentForm) commentForm.addEventListener("submit", e=>{
+    e.preventDefault();
+    const f = new FormData(commentForm);
+    const c = { id: nextId.comments++, author: f.get("author"), text: f.get("text"), date: new Date().toLocaleDateString() };
+    state.comments.push(c);
+    logActivity(`${c.author} left a comment.`);
+    render();
+  });
+}
+
+// ---------------- Nav + notifications wiring ----------------
+document.getElementById("tabs").addEventListener("click", e=>{
+  if(e.target.tagName === "BUTTON"){
+    currentTab = e.target.dataset.tab;
+    render();
+  }
+});
+
+document.getElementById("bellBtn").addEventListener("click", e=>{
+  e.stopPropagation();
+  const panel = document.getElementById("notifPanel");
+  panel.classList.toggle("open");
+  if(panel.classList.contains("open")){ unread = 0; updateBadge(); }
+});
+document.addEventListener("click", ()=> document.getElementById("notifPanel").classList.remove("open"));
+
+// ---------------- Init ----------------
+render();
+</script>
+</body>
+</html>
